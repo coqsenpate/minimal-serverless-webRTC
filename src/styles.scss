@@ -1,0 +1,37 @@
+body {
+	background-color: whitesmoke;
+}
+
+
+.setup {
+	display: flex;
+	justify-content: space-around;
+	.section{
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin: 20px;
+		.configInput {
+			height: 200px;
+			width: 200px;
+		}
+		button, textarea {
+			margin: 10px;
+		}
+		textarea {
+			resize: none;
+		}
+	}
+}
+
+.chat {
+	display: flex;
+	flex-direction: column;
+	padding: 0 25%;
+	& > * {
+		margin: 5px;
+	}
+	textarea {
+		resize: none;
+	}
+}
