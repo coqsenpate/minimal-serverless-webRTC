@@ -4,28 +4,23 @@
   <meta charset="utf-8">
 </head>
 <body>
-	<div class="setup">
-		<div class="section createRoomSection">
-			<button id="createRoomBtn" class="btn btn-primary">Create Room >></button>
-			<textarea id="offerOutput" type="text" rows="8" cols="50"></textarea>
-			<textarea id="answerInput" type="text" rows="8" cols="50" placeholder="Paste Answer here..."></textarea>
-			<button id="join1" class="btn btn-primary">GO</button>
-			<div class="chat1 chat">
-				<input id="chat1Input" type="text" placeholder="Type your text here...">
-				<button id="send2chatBtn">Send</button>
-				<textarea id ="chat1Textarea" type="text" rows="8" cols="50"></textarea>
-			</div>
+	<div class="setup container">
+		<div class="section offerSection">
+			<button id="createOfferBtn" class="btn btn-primary">Create Offer</button>
+			<textarea id="offerOutput" type="text" rows="8" cols="50" readonly></textarea>
+			<textarea id="answerInput" type="text" rows="8" cols="50" placeholder="Paste Answer here and click button below"></textarea>
+			<button id="setAnswerBtn" class="btn btn-primary">Set answer</button>
 		</div>
-		<div class="section joinRoomSection">
-			<textarea id ="offerInput" type="text" rows="8" cols="50" placeholder="Paste offer here"></textarea>
-			<button id="joinRoomBtn" class="btn btn-primary">>> Join Room</button>
-			<textarea id ="answerOutput" type="text" rows="8" cols="50"></textarea>
-			<div class="chat2 chat">
-				<input id="chat2Input" type="text" placeholder="Type your text here...">
-				<button id="send2chatBtn">Send</button>
-				<textarea id ="chat2Textarea" type="text" rows="8" cols="50"></textarea>
-			</div>
+		<div class="section answerSection">
+			<textarea id ="offerInput" type="text" rows="8" cols="50" placeholder="Paste offer here and click button below"></textarea>
+			<button id="createAnswerBtn" class="btn btn-primary">Create Answer</button>
+			<textarea id ="answerOutput" type="text" rows="8" cols="50" readonly></textarea>
 		</div>
+	</div>
+	<div class="chat container">
+		<input id="chatInput" type="text" placeholder="Type your text here...">
+		<button id="sendToChatBtn">Send</button>
+		<textarea id ="chatTextarea" type="text" rows="8" cols="50" readonly></textarea>
 	</div>
 </body>
 </html>

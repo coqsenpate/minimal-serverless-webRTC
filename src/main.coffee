@@ -5,51 +5,59 @@ import _ from 'lodash'
 
 console.log 'Doin\' it right'
 
-dataChanel1 = dataChannel2 = null
+dataChannels = []
+# peerDataChannels = []
 
-# cfg =
-# 	"iceServers":[{"url":"stun:23.21.150.121"}]
-# con =
-# 	'optional': [{'DtlsSrtpKeyAgreement': true}]
+$('#createOfferBtn').on 'click', ->
+	handleClickOnCreateOfferBtn()
 
-$('#createRoomBtn').on 'click', ->
-	handleClickOnCreateRoomBtn()
+$('#createAnswerBtn').on 'click', ->
+	handleClickOnCreateAnswerBtn()
 
-$('#joinRoomBtn').on 'click', ->
-	handleClickOnJoinRoomBtn()
+$('#sendToChatBtn').on 'click', ->
+	msg = $('#chatInput').val()
+	console.log '>> Sending message:', msg, getDataChannels()
+	$('#chatInput').val ""
+	appendToChatTextarea msg, "Us: "
+	for dc in getDataChannels()
+		if dc.readyState is 'open'
+			dc.send msg
+
+getDataChannels = ->
+	dataChannels
 
 createPeerConnection = ->
-	# pc = new RTCPeerConnection cfg, con
 	pc = new RTCPeerConnection()
-	pc.ondatachannel = (event)-> console.log '>> On data channel event', event
-	pc.onsignalingstatechange = (event)-> console.log '>> Signaling state change event', event
+	pc.ondatachannel = (event)->
+		console.log '>> RECEIVED PEER DATACHANNEL!', event
+		# Received peer datachannel
+		# Set up chat message handler
+		setDataChannelHandlers event.channel
+
 	pc.onconnection = (event)-> console.log '>> Connection event', event
-	pc.oniceconnectionstatechange = (event)-> console.log '>> ICE connection state change event', event
-	pc.onicegatheringstatechange = (event)-> console.log '>> ICE gathering state change', event
-	pc.onsignalingstatechange = (event)-> console.log '>> Signaling state change event', event
+	pc.onnegotiationneeded = (event)-> console.log '>> PC: Negotiation Needed event', event
 	pc
+
+setDataChannelHandlers = (dc)->
+	dc.onmessage = (e)->
+		msg = e.data
+		console.log '>> Message received:', msg
+		appendToChatTextarea msg, "Them: "
+
+appendToChatTextarea = (msg, prefix)->
+	$('#chatTextarea').val ($('#chatTextarea').val() + prefix + msg + "\n" )
 
 createDataChannel = (pc, chanName)->
 	dc = pc.createDataChannel chanName, {reliable:true}
 	dc.onclose = -> console.log 'DataChannel closed'
 	dc.onerror = (err)-> console.log 'DataChannel error', err
+	dc.onopen = (e)-> console.log '>>> DATACHANNEL OPEN <<<', e
 
-	dc.onopen = ->
-		console.log 'DataChannel open'
-		dcLabel = dc.label
-		$("[data-channelLabel=\"#{dcLabel}\"]").on 'click', ->
-			msg = $('#chatInput').val()
-			console.log '>> Sending...', msg
-			dc.send msg
-
-	dc.onmessage = (e)->
-		console.log '>> Message event!', e.msg
-
+	dataChannels.push dc
 	dc
 
 createOffer = (pc)->
 	console.log '> Creating offer'
-	isNegotiating = false
 	pc.createOffer()
 
 createAnswer = (pc)->
@@ -67,48 +75,38 @@ setRemoteDescription = (pc, sessionDesc)->
 sendDataToPeer = (dc, data)->
 	dc.send data
 
-handleClickOnCreateRoomBtn = ->
-	pc1 = createPeerConnection()
-	dataChannel1 = createDataChannel pc1, 'dataChannel1'
-	createOffer(pc1).then((offer)->
-		setLocalDescription(pc1, offer).then ->
+handleClickOnCreateOfferBtn = ->
+	pc = createPeerConnection()
+	id = dataChannels.length
+	createDataChannel(pc, "dataChannel1_#{id}")
 
-			# Setup will resume on null-icecandidate event
-			pc1.onicecandidate = (e)->
-				console.log '>> pc1 ICE candidate event', e
-				unless e.candidate is null
-					console.log '>> pc1: Treating non-null ICE candidate...'
-				else
-					console.log '>> pc1: ICE candidates treatment over'
-					$('#offerOutput').val JSON.stringify(pc1.localDescription)
+	createOffer(pc).then((offer)->
+		setLocalDescription(pc, offer).then ->
+			pc.onicecandidate = (e)->
+				if e.candidate is null
+					# Event with null candidate signals that ice candidates gathering is over
+					$('#offerOutput').val JSON.stringify(pc.localDescription)
 
-			$('#join1').on 'click', ->
+			$('#setAnswerBtn').on 'click', ->
 				answer = JSON.parse($('#answerInput').val())
-				setRemoteDescription(pc1, answer)
+				setRemoteDescription(pc, answer)
 
 	).catch (err)->
 		console.log 'Error setting up peerConnection1:', err
 
-handleClickOnJoinRoomBtn = ->
-	pc2 = createPeerConnection()
-	dataChannel2 = createDataChannel pc2, 'dataChannel2'
+handleClickOnCreateAnswerBtn = ->
+	pc = createPeerConnection()
+	id = dataChannels.length
+	createDataChannel(pc, "dataChannel2_#{id}")
 
 	offer = JSON.parse($('#offerInput').val())
-	setRemoteDescription(pc2, offer).then( ->
+	setRemoteDescription(pc, offer).then( ->
+		createAnswer(pc).then (answer)->
+			setLocalDescription(pc, answer).then ->
 
-		createAnswer(pc2).then (answer)->
-			setLocalDescription(pc2, answer).then ->
-
-				# Setup will resume on null-icecandidate event
-				pc2.onicecandidate = (e)->
-					console.log '>> pc2 ICE candidate event', e
-					unless e.candidate is null
-						console.log '>> pc2: Treating non-null ICE candidate'
-					else
-						console.log '>> pc2: ICE candidates treatment over'
-						$('#answerOutput').val JSON.stringify(pc2.localDescription)
-						# setRemoteDescription(pc1, pc2.localDescription).then ->
-						#
-						# 	console.log '> All descriptors set. Channels:', dataChannel1, dataChannel2
+				pc.onicecandidate = (e)->
+					if e.candidate is null
+						# Event with null candidate signals that ice candidates gathering is over
+						$('#answerOutput').val JSON.stringify(pc.localDescription)
 	).catch (err)->
 		console.log 'Error setting up peerConnection2:', err
