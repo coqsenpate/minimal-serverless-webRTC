@@ -14,7 +14,14 @@ $('#createOfferBtn').on 'click', ->
 $('#createAnswerBtn').on 'click', ->
 	handleClickOnCreateAnswerBtn()
 
-$('#sendToChatBtn').on 'click', ->
+$('#sendToChatBtn').on 'click', -> sendChatMsg()
+
+$('#chatInput').on 'keyup', (e)->
+	# Listen for 'Enter key'
+	if e.keyCode is 13
+		sendChatMsg()
+
+sendChatMsg = ->
 	msg = $('#chatInput').val()
 	console.log '>> Sending message:', msg, getDataChannels()
 	$('#chatInput').val ""
@@ -81,9 +88,6 @@ setLocalDescription = (pc, sessionDesc)->
 setRemoteDescription = (pc, sessionDesc)->
 	console.log '> Setting remote description', sessionDesc
 	pc.setRemoteDescription sessionDesc
-
-sendDataToPeer = (dc, data)->
-	dc.send data
 
 handleClickOnCreateOfferBtn = ->
 	pc = createPeerConnection()
