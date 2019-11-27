@@ -23,6 +23,9 @@ $('#sendToChatBtn').on 'click', ->
 		if dc.readyState is 'open'
 			dc.send msg
 
+clearAllTextareas = ->
+	$('textarea').val ""
+
 getDataChannels = ->
 	dataChannels
 
@@ -30,15 +33,18 @@ createPeerConnection = ->
 	pc = new RTCPeerConnection()
 	pc.ondatachannel = (event)->
 		console.log '>> RECEIVED PEER DATACHANNEL!', event
-		# Received peer datachannel
-		# Set up chat message handler
-		setDataChannelHandlers event.channel
+		# Received peer datachannel: register it...
+		dataChannels.push event.channel
+		# Then set up chat message handler
+		setDataChannelMessageHandler event.channel
+
+		clearAllTextareas()
 
 	pc.onconnection = (event)-> console.log '>> Connection event', event
 	pc.onnegotiationneeded = (event)-> console.log '>> PC: Negotiation Needed event', event
 	pc
 
-setDataChannelHandlers = (dc)->
+setDataChannelMessageHandler = (dc)->
 	dc.onmessage = (e)->
 		msg = e.data
 		console.log '>> Message received:', msg
@@ -48,12 +54,16 @@ appendToChatTextarea = (msg, prefix)->
 	$('#chatTextarea').val ($('#chatTextarea').val() + prefix + msg + "\n" )
 
 createDataChannel = (pc, chanName)->
-	dc = pc.createDataChannel chanName, {reliable:true}
+	dc = pc.createDataChannel chanName,
+		reliable:true
 	dc.onclose = -> console.log 'DataChannel closed'
 	dc.onerror = (err)-> console.log 'DataChannel error', err
-	dc.onopen = (e)-> console.log '>>> DATACHANNEL OPEN <<<', e
+	dc.onopen = (e)->
+		console.log '>>> DATACHANNEL OPEN <<<', e
+		clearAllTextareas()
 
-	dataChannels.push dc
+	setDataChannelMessageHandler dc
+
 	dc
 
 createOffer = (pc)->
@@ -78,7 +88,7 @@ sendDataToPeer = (dc, data)->
 handleClickOnCreateOfferBtn = ->
 	pc = createPeerConnection()
 	id = dataChannels.length
-	createDataChannel(pc, "dataChannel1_#{id}")
+	dataChannels.push createDataChannel(pc, "dataChannel_#{id}")
 
 	createOffer(pc).then((offer)->
 		setLocalDescription(pc, offer).then ->
@@ -96,8 +106,6 @@ handleClickOnCreateOfferBtn = ->
 
 handleClickOnCreateAnswerBtn = ->
 	pc = createPeerConnection()
-	id = dataChannels.length
-	createDataChannel(pc, "dataChannel2_#{id}")
 
 	offer = JSON.parse($('#offerInput').val())
 	setRemoteDescription(pc, offer).then( ->
