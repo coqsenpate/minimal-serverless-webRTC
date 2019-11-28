@@ -1,16 +1,18 @@
-body {
+.hidden {
+	display: none !important;
+}
+
+.mainContainer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
 	background-color: whitesmoke;
 }
 
-
 .setup {
-	display: flex;
-	justify-content: space-around;
 	.section{
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		margin: 20px;
 		.configInput {
 			height: 200px;
 			width: 200px;
